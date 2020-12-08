@@ -12,19 +12,45 @@ export default createStore({
       numero: 0,
       activo: true
     },
-    user: null
+    user: null,
+    error: {
+      tipo: null,
+      mensaje: null
+    }
   },
   mutations: {
+    // Validation and Eroor of CLient
+    setError(state, payload){
+      if (payload === null) {
+        return state.error = { tipo: null, mensaje: null }
+      }
+      if (payload === 'EMAIL_NOT_FOUND') {
+        return state.error = {tipo: 'email', mensaje: 'Email no registrado'}
+      }
+      if (payload === 'INVALID_PASSWORD') {
+        return state.error = {tipo: 'password', mensaje: 'Password Incorrecta'}
+      }
+      if (payload === 'EMAIL_EXISTS') {
+        return state.error = {tipo: 'email', mensaje: 'Email ya registrado'}
+      }
+      if (payload === 'INVALID_EMAIL') {
+        return state.error = {tipo: 'email', mensaje: 'Email invalido'}
+      }
+    },
+    // Post users LOGIN 
     setUser(state, payload){
       state.user = payload
     },
+    // Cargar users
     cargar(state, payload){
       state.tareas = payload;
     },
+    // Post Tareas
     set(state, payload){
       state.tareas.push(payload);
       localStorage.setItem('tareas', JSON.stringify(state.tareas));
     },
+    // Delete tareas
     delete(state, payload){
       state.tareas = state.tareas.filter(item => item.id !== payload);
       localStorage.setItem('tareas', JSON.stringify(state.tareas));
@@ -43,11 +69,14 @@ export default createStore({
     }
   },
   actions: {
+
    cerrarSesion({commit}){
      commit('setUser', null);
      router.push('/ingreso');
      localStorage.removeItem('user')
    },
+
+   // Ingresar Users
     async ingresarUser({commit}, user){
       try {
         const response = await fetch('https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=AIzaSyDr9Htr_3_c3Rp0uH4J52qaAI62U0CLMy4',{
@@ -62,14 +91,18 @@ export default createStore({
         console.log('userDB', userDB);
         if (userDB.error) {
           console.log(userDB.error);
+          return commit('setError', userDB.error.message);
         }
         commit('setUser', userDB);
+        commit('setError', null);
         router.push('/');
         localStorage.setItem('user', JSON.stringify(userDB));
       } catch (error) {
         console.log(error);
       }
     },
+
+    // Registrar users
     async registrarUser({commit}, user){
      try {
       const response = await fetch('https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=AIzaSyDr9Htr_3_c3Rp0uH4J52qaAI62U0CLMy4',{
@@ -82,9 +115,11 @@ export default createStore({
       })
       const userDB = await response.json();
       if (userDB.error) {
-        return console.log(userDB.error);
+        console.log(userDB.error);
+        return commit('setError', userDB.error.message);
       }
       commit('setUser', userDB);
+      commit('setError', null);
       router.push('/ingreso');
       localStorage.setItem('user', JSON.stringify(userDB))
      } catch (error) {

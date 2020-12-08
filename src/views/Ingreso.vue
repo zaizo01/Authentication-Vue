@@ -1,4 +1,5 @@
 <template>
+ <div class="flex justify-center pt-10 text-red-600 font-semibold" v-if="error.tipo !== null">{{error.mensaje}}</div>
   <div class="w-full h-full flex items-center justify-center">
     <form @submit.prevent="ingresarUser({email: email, password: passOne})" class="pt-24">
       <div class="border-2 bg-gray-100 w-96 p-8 rounded-md flex flex-col justify-center">
@@ -27,7 +28,7 @@
 </template>
 
 <script>
-import { mapActions } from 'vuex';
+import { mapActions, mapState } from 'vuex';
 export default {
   data() {
       return {
@@ -53,13 +54,17 @@ export default {
               return 'border-2 border-red-500';
           }
           return
-      }
+      },
+      ...mapState(['error'])
     
   },
   methods: {
       ...mapActions(['ingresarUser']),
-      procesarFormulario(){
-          this.ingresarUser({email: this.email, password: this.passOne});
+      async procesarFormulario(){
+          await this.ingresarUser({email: this.email, password: this.passOne});
+          if (this.error.tipo !== null) {
+              return
+          }
           this.email = '';
           this.passOne = '';
       },
